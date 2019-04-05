@@ -15,6 +15,7 @@
 # import RegEx
 import re
 from time import sleep
+import io
 
 
 def isInt(x):
@@ -129,7 +130,7 @@ def ReplaceInputOutput(listOfLines):
                 printStr = line[startStr+1:endStr]
                 listOfLines.insert(i, "OUTPUT " + printStr)
 
-                #listOfLines[i] = re.sub(r"\s*(\s*\".*\"\s*)\s*", line, "")
+                # listOfLines[i] = re.sub(r"\s*(\s*\".*\"\s*)\s*", line, "")
                 i += 1
 
             startInput = line.find('input(')
@@ -137,6 +138,9 @@ def ReplaceInputOutput(listOfLines):
             listOfLines[i] = line[:startInput] + \
                 "USERINPUT" + line[endInput+1:]
         i += 1
+
+# No real clue how this works
+# I just stole it from the O.G. repo
 
 
 def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
@@ -153,7 +157,8 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
             If we find a word and it isn't a line we are meant to be avoiding (maybe it has a multiline comment?) we move down
                 We assign distance to how many characters in from the left the found word was, this will be the level in we are tracing with.
                 The program then searches each line that follows to see if it can find any character to the left (or equal) to distance on its current line.
-                If it finds and first character is else, # or ~~~ it ignores those lines.
+                # or ~~~ it ignores those lines.
+                If it finds and first character is else,
                 If it isn't any of those special characters that has been found first, we can assume this structure has finished as it has unindentected.
                     We write the line number and how far in the structure started to the 2 empty lists inside the sublist.
             Finally we return the searchFor list, hopefully with lots of line numbers and indentation distances.
@@ -162,19 +167,14 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
 
     searchFor = [["if", "ENDIF", [], [], False], ["def", "ENDSUBROUTINE", [], [], True], [
         "class", "ENDCLASS", [], [], True], ["while", "ENDWHILE", [], [], False], ["for", "ENDFOR", [], [], False]]
-    # print("CLEAR")
+
     for count in range(len(svgfile)):  # Iterate through each line in the text file
         for i in range(len(searchFor)):  # For each line in text file, iterate through clues
             currentClue = searchFor[i][0]
             # Check if the current line in the file has the required string
             found = svgfile[count].find(searchFor[i][0])
-            #print("founder!" + str(found))
 
             if (not (found == -1)) and not (count in linesToAvoid):
-                #debug("found an if on line " + str(count))
-                # print(svgfile[count])
-                #debug("found is " + str(found))
-                # time.sleep(0.1)
                 distance = found  # Distance is basically how many characters it is indented in
                 lineDone = False
                 for a in range(count+1, len(svgfile)):  # Iterate through rest of the lines
@@ -186,13 +186,10 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
                         try:
                             if not (svgfile[a][x] == " "):
                                 if svgfile[a][distance:(distance+4)] == "else":
-                                    #debug("else found" + str(a))
                                     f = False
                                 elif (svgfile[a][distance:(distance+1)] == "#"):
-                                    # debug("# found " + str(a))
                                     f = False
                                 elif (svgfile[a][distance:(distance+3)] == "~~~"):
-                                    # debug(svgfile[a][distance:(distance+4)])
                                     f = False
                                 else:
                                     f = True
@@ -200,7 +197,6 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
                         except:
                             print("Error:")
                             print(svgfile[a])
-                            # debug("error")
 
                     if f:
                         if lineDone == False:
@@ -232,6 +228,18 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
         if not (i in toRemove):
             svgfile2.append(svgfile[i])
 
+    listOfLines = svgfile2
+    return svgfile2
+
+
+def AddThenToIfBlocks(listOfLines):
+    i = 0
+    for line in listOfLines.copy():
+        if "IF" in line and " THEN" not in line and "ENDIF" not in line:
+            colonIndex = line.rfind(":")
+            listOfLines[i] = line[:colonIndex] + " THEN"
+        i += 1
+
 
 def SelectPythonFile():
     return input("Enter Python file path: ")
@@ -244,19 +252,18 @@ def SaveListToFile(listOfLines):
     savePath = input("Please enter a path and filename to save to: ")
     print()
 
-    lineEndings = "\r\n" if input(
-        "Please choose line endings (Windows - 1/Linux - 2)") == "1" else "\n"
+    # lineEndings = "\r\n" if input(
+    #     "Please choose line endings (Windows - 1/Linux - 2)") == "1" else "\n"
 
-    print("Chosen " + ("Windows" if lineEndings ==
-                       "\r\n" else "Linux") + " line endings")
+    # print("Chosen " + ("Windows" if lineEndings ==
+    #                    "\r\n" else "Linux") + " line endings")
+    # print()
 
-    print()
     print("Saving...")
     print()
 
-    saveFile = open(savePath, 'w')
-    for line in listOfLines:
-        saveFile.write(line + lineEndings)
+    with io.open(savePath, 'w', encoding='utf8') as saveFile:
+        saveFile.write("\n".join(listOfLines))
 
     print("Done!")
     print()
@@ -283,14 +290,20 @@ def Start():
     Replace(pyLines, [["int(", "STRING_TO_INT("], ["str(", "INT_TO_STRING("], [
             "random.randint(", "RANDOM_INT("], ["randint(", "RANDOM_INT("], ["len(", "LEN("]])
 
-    ReplaceCodeBlocks(pyLines)
+    # replace elif with ~~~ so that it isn't recognised as an if
+    Replace(pyLines, [["elif", "~~~"]])
+
+    pyLines = ReplaceCodeBlocks(pyLines)
 
     Replace(pyLines, [["def ", "SUBROUTINE "], ["self.", " "], ["return", "RETURN"], [
             "else:", "ELSE"], ["if ", "IF "], [" or ", " OR "], [" and ", " AND "], ["class ", "CLASS "]])
 
-    Replace(pyLines, [["~~~", "ELSEIF"]])  # replaces replaced thingies
+    Replace(pyLines, [["~~~", "ELSE IF"]])  # replaces replaced thingies
 
-    print(pyLines)
+    # Replace : in if blocks with THEN
+    AddThenToIfBlocks(pyLines)
+
+    SaveListToFile(pyLines)
 
 
 def main():
