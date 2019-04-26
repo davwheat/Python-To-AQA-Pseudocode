@@ -333,6 +333,8 @@ def main():
                 if option == 1:
                     Start()
                     input()
+                if option == 2:
+                    print("This project was originally created by gbaman. Rewritten and refactored to fit new AQA Pseudocode standards.\n\nThe version of pseudocode supported is available in the repository's root folder: https://github.com/davwheat/Python-To-AQA-Pseudocode\n\nPlease note that not all actions are supported yet -- only the basics. Feel free to open an issue if a technique you use isn't supported yet!")
 
 
 main()
