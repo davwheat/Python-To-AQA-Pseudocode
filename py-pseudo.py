@@ -148,7 +148,7 @@ def ReplaceCodeBlocks(listOfLines, linesToAvoid=[]):
         This function traces through the entire file tracing indentation to find where structures start and end.
         The protocol for the lists is as follows
         [WordSearchingFor, WordReplaceWith, EmptyList, EmptyList, AddANewLineAfter?]
-        The 2 emtpy lists are used to store the location and line number of where the items are found, which is passed onto the replacing function
+        The 2 empty lists are used to store the location and line number of where the items are found, which is passed onto the replacing function
         A basic description of what is going on
             We define the list of lists, searchFor which holds the stuff we are going to look for.
             We then, using a for loop iterate through every line.
@@ -333,8 +333,10 @@ def main():
                 if option == 1:
                     Start()
                     input()
-                if option == 2:
+                elif option == 2:
                     print("This project was originally created by gbaman. Rewritten and refactored to fit new AQA Pseudocode standards.\n\nThe version of pseudocode supported is available in the repository's root folder: https://github.com/davwheat/Python-To-AQA-Pseudocode\n\nPlease note that not all actions are supported yet -- only the basics. Feel free to open an issue if a technique you use isn't supported yet!")
+                elif option == 3:
+                    exit()
 
 
 main()
